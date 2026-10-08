@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProyozonPlus - Order Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        },
+                        darkBg: '#0b0f19',
+                        darkCard: '#131b2e',
+                        darkBorder: '#1f293d'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #2a364f; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b4d71; }
+        .modal-blur { backdrop-filter: blur(8px); }
+        .tab-active { border-bottom: 2px solid #a855f7; color: #c084fc; font-weight: 600; }
+    </style>
+</head>
+<body class="h-full font-sans bg-[#0b0e17] text-slate-200 antialiased selection:bg-purple-600 selection:text-white">
+
+    <!-- LOGIN OVERLAY MODAL -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 modal-blur">
+        <div class="w-full max-w-md p-8 bg-[#131927] border border-slate-800 rounded-2xl shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl"></div>
+            <div class="text-center mb-8 relative z-10">
+                <div class="w-16 h-16 bg-gradient-to-tr from-purple-600 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/30">
+                    <span class="text-3xl font-black text-white">P</span>
+                </div>
+                <h2 class="text-2xl font-bold text-white tracking-tight">ProyozonPlus OMS</h2>
+                <p class="text-slate-400 text-sm mt-1">Please login with your merchant credentials</p>
+            </div>
+
+            <form id="loginForm" onsubmit="return handleLogin(event)" class="space-y-5 relative z-10">
+                <div id="loginError" class="hidden p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-xs rounded-lg text-center font-medium">
+                    Invalid Username or Password!
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Store / Username</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-store absolute left-3.5 top-3.5 text-slate-500"></i>
+                        <input type="text" id="loginUsername" required value="proyozonplus.shop"
+                            class="w-full pl-10 pr-4 py-2.5 bg-[#0b0e17] border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-500"></i>
+                        <input type="text" id="loginPassword" required value="@proyojon22558800"
+                            class="w-full pl-10 pr-4 py-2.5 bg-[#0b0e17] border border-slate-700/80 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition text-sm">
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-600/25 transition duration-200 active:scale-[0.98]">
+                    Sign In to Dashboard
+                </button>
+            </form>
+            <div class="mt-6 text-center text-xs text-slate-500">
+                Demo Auth: <span class="text-slate-400 font-mono">proyozonplus.shop</span> / <span class="text-slate-400 font-mono">@proyojon22558800</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP STRUCTURE -->
+    <div id="appContainer" class="hidden min-h-screen flex flex-col bg-[#0b0e17]">
+        
+        <!-- HEADER -->
+        <header class="bg-[#121826] border-b border-slate-800/80 sticky top-0 z-30 px-4 lg:px-6 py-2.5 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="switchMainTab('webOrders')">
+                    <div class="w-10 h-10 bg-gradient-to-tr from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center font-black text-xl text-white shadow-lg shadow-purple-600/30">
+                        P
+                    </div>
+                    <span class="text-lg font-bold text-white tracking-wide hidden sm:inline">ProyozonPlus</span>
+                </div>
+
+                <!-- MAIN NAVIGATION TABS -->
+                <nav class="flex items-center gap-1.5 ml-2 bg-[#0b0e17] p-1 rounded-xl border border-slate-800">
+                    <button id="navWebOrders" onclick="switchMainTab('webOrders')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition bg-purple-600/20 text-purple-300 border border-purple-500/30">
+                        <i class="fa-solid fa-globe text-xs"></i>
+                        <span>Web Order List</span>
+                        <span id="badgeWebOrders" class="ml-1 bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full text-[10px] font-bold">0</span>
+                    </button>
+                    <button id="navOrderList" onclick="switchMainTab('orderList')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition">
+                        <i class="fa-solid fa-list-check text-xs"></i>
+                        <span>Order List</span>
+                        <span id="badgeOrderList" class="ml-1 bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-full text-[10px] font-bold">0</span>
+                    </button>
+                    <button id="navSearchPage" onclick="switchMainTab('searchPage')" class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        <span>Search</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- SEARCH BAR IN HEADER -->
+            <div class="flex-1 max-w-md hidden md:block">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-2.5 text-slate-500 text-xs"></i>
+                    <input type="text" id="globalSearchInput" onkeyup="handleGlobalSearch(event)" placeholder="Search Invoice, Mobile, Customer Name, Tracking ID..."
+                        class="w-full pl-9 pr-4 py-1.5 bg-[#0b0e17] border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition">
+                </div>
+            </div>
+
+            <!-- RIGHT ACTION CONTROLS -->
+            <div class="flex items-center gap-3">
+                <button onclick="openNewOrderModal()" class="flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-purple-600/20 transition active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">New Order</span>
+                </button>
+
+                <div class="flex items-center gap-2 border-l border-slate-800 pl-3">
+                    <button class="px-2 py-1 bg-slate-800 text-slate-300 text-[11px] rounded font-bold hover:bg-slate-700">BN</button>
+                    <button class="text-slate-400 hover:text-slate-200 text-sm p-1.5"><i class="fa-regular fa-bell"></i></button>
+                    <div class="w-8 h-8 bg-purple-900/50 border border-purple-500/40 rounded-full flex items-center justify-center font-bold text-xs text-purple-300">
+                        P
+                    </div>
+                    <button onclick="handleLogout()" title="Logout" class="text-slate-400 hover:text-red-400 text-sm p-1.5 transition ml-1">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTENT WRAPPER -->
+        <main class="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto space-y-6">
+
+            <!-- SECTION 1: WEB ORDER LIST VIEW -->
+            <section id="viewWebOrders" class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                    <h1 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span>Web Orders Pipeline</span>
+                        <span class="text-xs font-normal text-slate-400">(Initial Customer Orders)</span>
+                    </h1>
+                </div>
+
+                <!-- SUB-TABS: WEB ORDER LIST -->
+                <div class="flex items-center gap-1 overflow-x-auto pb-2 border-b border-slate-800/60 no-scrollbar" id="webOrderSubTabs">
+                </div>
+
+                <!-- TABLE CONTENT AREA -->
+                <div class="bg-[#121826] border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+                        <div class="relative flex-1 min-w-[240px]">
+                            <i class="fa-solid fa-filter absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                            <input type="text" id="webOrderFilterInput" oninput="renderWebOrdersTable()" placeholder="Filter orders by name, phone or invoice..."
+                                class="w-full pl-9 pr-4 py-1.5 bg-[#0b0e17] border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500">
+                        </div>
+
+                        <!-- ACTIONS POPOVER BUTTON -->
+                        <div class="relative">
+                            <button onclick="toggleActionsPopover()" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs rounded-xl flex items-center gap-2 transition shadow-lg shadow-purple-600/20">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span>Actions</span>
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </button>
+
+                            <!-- POPOVER MENU -->
+                            <div id="actionsPopover" class="hidden absolute right-0 mt-2 w-64 bg-[#182032] border border-slate-700/80 rounded-2xl shadow-2xl z-40 p-2 space-y-1 text-xs">
+                                <button onclick="selectAllWebOrders()" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-check-double text-purple-400"></i> Select All Orders
+                                </button>
+                                <div class="border-t border-slate-800 my-1"></div>
+                                <div class="px-3 py-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Courier Status Entry</div>
+                                <button onclick="bulkMoveCourier('Pathao')" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-truck-fast text-emerald-400"></i> Send to Pathao Courier
+                                </button>
+                                <button onclick="bulkMoveCourier('Steadfast')" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-box text-cyan-400"></i> Send to Steadfast Courier
+                                </button>
+                                <button onclick="bulkMoveCourier('RTS')" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-boxes-packing text-amber-400"></i> Mark Ready To Ship (RTS)
+                                </button>
+                                <div class="border-t border-slate-800 my-1"></div>
+                                <button onclick="bulkPrint('Invoice')" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-print text-indigo-400"></i> Print Invoices / Labels
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-[#0e1320] text-slate-400 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-800">
+                                    <th class="p-3.5 w-10 text-center"><input type="checkbox" id="selectAllWebOrdersCheck" onchange="toggleSelectAllWebOrders(this)" class="rounded bg-slate-900 border-slate-700 text-purple-600 focus:ring-0"></th>
+                                    <th class="p-3.5">Invoice / Date</th>
+                                    <th class="p-3.5">Customer Information</th>
+                                    <th class="p-3.5">Courier & Tracking</th>
+                                    <th class="p-3.5">Items Purchased</th>
+                                    <th class="p-3.5">Amount & Payment</th>
+                                    <th class="p-3.5 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="webOrdersTableBody" class="divide-y divide-slate-800/60 text-xs">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: ORDER LIST VIEW -->
+            <section id="viewOrderList" class="hidden space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+                    <h1 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span>Order Management Pipeline</span>
+                    </h1>
+                </div>
+
+                <!-- SUB-TABS: ORDER LIST -->
+                <div class="flex items-center gap-1 overflow-x-auto pb-2 border-b border-slate-800/60 no-scrollbar" id="orderListSubTabs">
+                </div>
+
+                <!-- COURIER SUB-FILTERS & ACTION CONTROLS -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400 font-medium">Courier Filter:</span>
+                        <button onclick="setCourierFilter('All')" id="courierFilterAll" class="px-3 py-1 bg-purple-600/30 text-purple-300 border border-purple-500/40 rounded-lg text-xs font-medium">All</button>
+                        <button onclick="setCourierFilter('Pathao')" id="courierFilterPathao" class="px-3 py-1 bg-slate-800 text-slate-400 border border-slate-700/60 rounded-lg text-xs font-medium hover:text-slate-200">Pathao</button>
+                        <button onclick="setCourierFilter('Steadfast')" id="courierFilterSteadfast" class="px-3 py-1 bg-slate-800 text-slate-400 border border-slate-700/60 rounded-lg text-xs font-medium hover:text-slate-200">Steadfast</button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <div class="relative">
+                            <button onclick="toggleOrderListActionsPopover()" class="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs rounded-xl flex items-center gap-2 transition shadow-lg shadow-purple-600/20">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span>Actions</span>
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </button>
+
+                            <div id="orderListActionsPopover" class="hidden absolute right-0 mt-2 w-64 bg-[#182032] border border-slate-700/80 rounded-2xl shadow-2xl z-40 p-2 space-y-1 text-xs">
+                                <button onclick="selectAllOrderList()" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-check-double text-purple-400"></i> Select All Orders
+                                </button>
+                                <div class="border-t border-slate-800 my-1"></div>
+                                <div class="px-3 py-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Move Order & Tracking</div>
+                                <button onclick="bulkOrderListRTS('RTS')" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-boxes-packing text-amber-400"></i> Ready To Ship (RTS)
+                                </button>
+                                <button onclick="bulkOrderListRTS('Pathao')" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-truck-fast text-emerald-400"></i> Send to Pathao (Move to RTS)
+                                </button>
+                                <button onclick="bulkOrderListRTS('Steadfast')" class="w-full text-left px-3 py-2 text-slate-300 hover:bg-slate-800 rounded-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-box text-cyan-400"></i> Send to Steadfast (Move to RTS)
+                                </button>
+                            </div>
+                        </div>
+
+                        <button onclick="bulkPrintStickers()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs rounded-xl flex items-center gap-2 transition shadow-lg shadow-indigo-600/20">
+                            <i class="fa-solid fa-note-sticky"></i>
+                            <span>Print Sticker</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TABLE CONTENT AREA -->
+                <div class="bg-[#121826] border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl">
+                    <div class="p-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+                        <div class="relative flex-1 min-w-[240px]">
+                            <i class="fa-solid fa-filter absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                            <input type="text" id="orderListFilterInput" oninput="renderOrderListTable()" placeholder="Filter active orders..."
+                                class="w-full pl-9 pr-4 py-1.5 bg-[#0b0e17] border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500">
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="bulkOrderListAction('Shipped')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition">
+                                <i class="fa-solid fa-paper-plane mr-1"></i> Send to Shipping
+                            </button>
+                            <button onclick="bulkOrderListAction('Cancelled')" class="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-medium transition">
+                                <i class="fa-solid fa-ban mr-1"></i> Cancel Selected
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-[#0e1320] text-slate-400 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-800">
+                                    <th class="p-3.5 w-10 text-center"><input type="checkbox" id="selectAllOrderListCheck" onchange="toggleSelectAllOrderList(this)" class="rounded bg-slate-900 border-slate-700 text-purple-600"></th>
+                                    <th class="p-3.5">Invoice / Date</th>
+                                    <th class="p-3.5">Customer Information</th>
+                                    <th class="p-3.5">Courier & Tracking</th>
+                                    <th class="p-3.5">Items Purchased</th>
+                                    <th class="p-3.5">Amount & Payment</th>
+                                    <th class="p-3.5 text-center">Status / Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderListTableBody" class="divide-y divide-slate-800/60 text-xs">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: DEDICATED SEARCH PAGE VIEW -->
+            <section id="viewSearchPage" class="hidden space-y-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-white tracking-tight">Search Orders & Customers</h1>
+                    <p class="text-slate-400 text-xs mt-1">Search by Invoice, Phone Number, Customer Name, Courier Tracking ID, or Payment Transaction</p>
+                </div>
+
+                <div class="bg-[#121826] border border-slate-800/80 rounded-2xl p-6 shadow-2xl space-y-5">
+                    <div class="flex items-center gap-6 border-b border-slate-800/80 pb-3 text-xs overflow-x-auto no-scrollbar">
+                        <button onclick="setSearchCategory('all')" id="searchTab-all" class="search-tab font-semibold text-purple-400 border-b-2 border-purple-500 pb-2 transition whitespace-nowrap">All Fields</button>
+                        <button onclick="setSearchCategory('invoice')" id="searchTab-invoice" class="search-tab text-slate-400 hover:text-slate-200 pb-2 transition whitespace-nowrap">Invoice</button>
+                        <button onclick="setSearchCategory('phone')" id="searchTab-phone" class="search-tab text-slate-400 hover:text-slate-200 pb-2 transition whitespace-nowrap">Mobile Number</button>
+                        <button onclick="setSearchCategory('name')" id="searchTab-name" class="search-tab text-slate-400 hover:text-slate-200 pb-2 transition whitespace-nowrap">Customer Name</button>
+                        <button onclick="setSearchCategory('tracking')" id="searchTab-tracking" class="search-tab text-slate-400 hover:text-slate-200 pb-2 transition whitespace-nowrap">Courier Tracking ID</button>
+                        <button onclick="setSearchCategory('payment')" id="searchTab-payment" class="search-tab text-slate-400 hover:text-slate-200 pb-2 transition whitespace-nowrap">Payment Transaction</button>
+                    </div>
+
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-500 text-sm"></i>
+                        <input type="text" id="dedicatedSearchInput" oninput="executeDedicatedSearch()" placeholder="Enter search term (e.g. 0191122344)..."
+                            class="w-full pl-11 pr-4 py-3 bg-[#0b0e17] border border-purple-500/40 rounded-2xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition shadow-inner">
+                    </div>
+
+                    <div class="mt-4">
+                        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
+                            <span>Search Results</span>
+                            <span id="searchResultsCount" class="text-purple-400 font-mono">0 Items Found</span>
+                        </h3>
+                        
+                        <div class="bg-[#0b0e17] border border-slate-800 rounded-xl overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-[#0e1320] text-slate-400 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-800">
+                                            <th class="p-3.5">Invoice</th>
+                                            <th class="p-3.5">Customer Info</th>
+                                            <th class="p-3.5">Courier Tracking</th>
+                                            <th class="p-3.5">Items</th>
+                                            <th class="p-3.5">Total Amount</th>
+                                            <th class="p-3.5">Current Status</th>
+                                            <th class="p-3.5 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="searchResultsTableBody" class="divide-y divide-slate-800/60 text-xs">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ORDER DETAILS DRAWER / MODAL -->
+    <div id="orderDrawerModal" class="hidden fixed inset-0 z-50 flex items-center justify-end bg-slate-950/80 modal-blur overflow-y-auto">
+        <div class="w-full max-w-2xl bg-[#121826] border-l border-slate-800 h-full p-6 space-y-6 overflow-y-auto shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <span>Order Details</span>
+                        <span id="drawerInvoiceId" class="text-purple-400 font-mono text-sm">#INV-8374</span>
+                    </h2>
+                    <p class="text-slate-400 text-xs mt-0.5" id="drawerOrderDate">Oct 08, 2026</p>
+                </div>
+                <button onclick="closeOrderDrawer()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="bg-[#182032] border border-slate-700/70 rounded-2xl p-4 space-y-3">
+                <span class="text-xs font-bold text-purple-300 uppercase tracking-wider block border-b border-slate-700/60 pb-2">ORDER ACTIONS</span>
+                <div class="flex items-center gap-3">
+                    <div class="relative flex-1">
+                        <select id="drawerStatusSelect" class="w-full px-3.5 py-2 bg-[#0b0e17] border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-purple-500">
+                            <option value="Processing">Processing</option>
+                            <option value="Good But No Response">Good But No Response</option>
+                            <option value="No Response">No Response</option>
+                            <option value="Advance Payment">Advance Payment</option>
+                            <option value="On Hold">On Hold</option>
+                            <option value="Cancel">Cancel</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Pending">Pending</option>
+                            <option value="RTS">Ready To Ship (RTS)</option>
+                            <option value="Shipped">Shipped</option>
+                            <option value="Incomplete">Incomplete</option>
+                        </select>
+                    </div>
+                    <button onclick="updateOrderStatusFromDrawer()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-emerald-600/20 flex items-center gap-2">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Update</span>
+                    </button>
+                </div>
+            </div>
+
+            <form id="orderDrawerForm" onsubmit="saveDrawerDetails(event)" class="space-y-4">
+                <input type="hidden" id="drawerOrderId">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Customer Mobile Number</label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="drawerCustomerPhone" required class="flex-1 px-3 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-xs text-white focus:border-purple-500">
+                            <a id="drawerCallBtn" href="#" class="p-2 bg-emerald-600/20 text-emerald-400 rounded-lg hover:bg-emerald-600/30 text-xs"><i class="fa-solid fa-phone"></i></a>
+                            <a id="drawerWaBtn" href="#" target="_blank" class="p-2 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/30 text-xs"><i class="fa-brands fa-whatsapp"></i></a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Customer Name</label>
+                        <input type="text" id="drawerCustomerName" required class="w-full px-3 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-xs text-white focus:border-purple-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Courier Service</label>
+                        <select id="drawerCourier" class="w-full px-3 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-xs text-white focus:border-purple-500">
+                            <option value="Steadfast">Steadfast Courier</option>
+                            <option value="Pathao">Pathao Courier</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Courier Tracking ID</label>
+                        <input type="text" id="drawerTrackingId" class="w-full px-3 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-xs text-white focus:border-purple-500 font-mono">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Full Shipping Address</label>
+                    <textarea id="drawerAddress" rows="2" class="w-full px-3 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-xs text-white focus:border-purple-500"></textarea>
+                </div>
+
+                <div class="border-t border-slate-800 pt-4">
+                    <label class="block text-xs font-semibold text-slate-300 mb-2">Purchased Combo Item</label>
+                    <select id="drawerProductSelect" onchange="recalculateDrawerTotal()" class="w-full px-3 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-xs text-white focus:border-purple-500">
+                        <option value="5 Piece Combo|450">5 Piece Combo – 450 BDT</option>
+                        <option value="8 Piece Combo|590">8 Piece Combo – 590 BDT</option>
+                        <option value="10 Piece Combo|670">10 Piece Combo – 670 BDT</option>
+                        <option value="12 Piece Combo|770">12 Piece Combo – 770 BDT</option>
+                        <option value="16 Piece Premium Combo|970">16 Piece Premium Combo (1 Wish Card + 4 Photos) – 970 BDT</option>
+                        <option value="20 Piece Premium Combo|1120">20 Piece Premium Combo (1 Wish Card + 4 Photos) – 1120 BDT</option>
+                    </select>
+                </div>
+
+                <div class="bg-[#0b0e17] p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+                    <div class="flex justify-between text-slate-400">
+                        <span>Subtotal:</span>
+                        <span id="calcSubtotal" class="font-mono text-white">0 BDT</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-400">
+                        <span>Delivery Charge:</span>
+                        <input type="number" id="calcDelivery" value="60" oninput="recalculateDrawerTotal()" class="w-20 px-2 py-1 bg-[#121826] border border-slate-700 rounded text-right text-white font-mono">
+                    </div>
+                    <div class="flex justify-between text-slate-200 font-bold border-t border-slate-800 pt-2 text-sm">
+                        <span>Total Grand Amount:</span>
+                        <span id="calcGrandTotal" class="font-mono text-purple-400">0 BDT</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                    <button type="button" onclick="closeOrderDrawer()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-purple-600/20">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- NEW ORDER MODAL -->
+    <div id="newOrderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 modal-blur p-4">
+        <div class="w-full max-w-lg bg-[#121826] border border-slate-800 rounded-2xl p-6 space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white"><i class="fa-solid fa-plus-circle text-purple-400 mr-2"></i>Create New Order Manually</h3>
+                <button onclick="closeNewOrderModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form onsubmit="handleCreateNewOrder(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-medium text-slate-400 mb-1">Customer Name</label>
+                    <input type="text" id="newCustName" required placeholder="e.g. Tanvir Ahmed" class="w-full px-3.5 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-white">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-medium text-slate-400 mb-1">Mobile Number</label>
+                        <input type="text" id="newCustPhone" required placeholder="017xxxxxxxx" class="w-full px-3.5 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-white">
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-400 mb-1">Courier Choice</label>
+                        <select id="newCourier" class="w-full px-3.5 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-white">
+                            <option value="Steadfast">Steadfast Courier</option>
+                            <option value="Pathao">Pathao Courier</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-400 mb-1">Full Address</label>
+                    <textarea id="newAddress" rows="2" required placeholder="House, Road, Area, Thana, District" class="w-full px-3.5 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-white"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-400 mb-1">Select Product Combo</label>
+                    <select id="newProduct" class="w-full px-3.5 py-2 bg-[#0b0e17] border border-slate-800 rounded-xl text-white">
+                        <option value="5 Piece Combo|450">5 Piece Combo – 450 BDT</option>
+                        <option value="8 Piece Combo|590">8 Piece Combo – 590 BDT</option>
+                        <option value="10 Piece Combo|670">10 Piece Combo – 670 BDT</option>
+                        <option value="12 Piece Combo|770">12 Piece Combo – 770 BDT</option>
+                        <option value="16 Piece Premium Combo|970">16 Piece Premium Combo – 970 BDT</option>
+                        <option value="20 Piece Premium Combo|1120">20 Piece Premium Combo – 1120 BDT</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeNewOrderModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl">Save Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        let ordersData = [
+            { id: 'ORD-9021', invoice: '#INV-9021', date: '08 Oct 2026, 04:15 PM', name: 'Rahim Uddin', phone: '01811223344', address: 'Dhanmondi 27, Dhaka', courier: 'Pathao', tracking: 'PTH-882101', product: '8 Piece Combo', amount: 650, status: 'Pending', type: 'web' },
+            { id: 'ORD-9022', invoice: '#INV-9022', date: '08 Oct 2026, 03:10 PM', name: 'Nusrat Jahan', phone: '01912345678', address: 'GEC Circle, Chattogram', courier: 'Steadfast', tracking: 'STF-449102', product: '12 Piece Combo', amount: 830, status: 'Processing', type: 'web' },
+            { id: 'ORD-9023', invoice: '#INV-9023', date: '08 Oct 2026, 02:00 PM', name: 'Tanvir Hossain', phone: '01719876543', address: 'Zindabazar, Sylhet', courier: 'Pathao', tracking: '', product: '5 Piece Combo', amount: 510, status: 'Incomplete', type: 'web' },
+            { id: 'ORD-9024', invoice: '#INV-9024', date: '07 Oct 2026, 01:25 PM', name: 'Sumaiya Akter', phone: '01521122334', address: 'Rajshahi University, Rajshahi', courier: 'Steadfast', tracking: 'STF-992104', product: '16 Piece Premium Combo', amount: 1030, status: 'Approved', type: 'list' },
+            { id: 'ORD-9025', invoice: '#INV-9025', date: '07 Oct 2026, 11:00 AM', name: 'Ashfaqur Rahman', phone: '01611009988', address: 'Shibganj, Bogura', courier: 'Pathao', tracking: 'PTH-110293', product: '20 Piece Premium Combo', amount: 1180, status: 'RTS', type: 'list' }
+        ];
+
+        let currentMainTab = 'webOrders';
+        let currentWebSubTab = 'Pending';
+        let currentOrderListSubTab = 'Processing';
+        let currentCourierFilter = 'All';
+        let searchCategory = 'all';
+
+        function notifyTelegramBot(order) {
+            console.log("Telegram Notification sent for order:", order.invoice, order.name, order.phone);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value;
+            const p = document.getElementById('loginPassword').value;
+            if(u === 'proyozonplus.shop' && p === '@proyojon22558800') {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                initDashboard();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+            return false;
+        }
+
+        function handleLogout() {
+            document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('loginOverlay').classList.remove('hidden');
+        }
+
+        function initDashboard() {
+            renderWebSubTabs();
+            renderOrderListSubTabs();
+            renderWebOrdersTable();
+            renderOrderListTable();
+            updateBadges();
+        }
+
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+            document.getElementById('viewWebOrders').classList.add('hidden');
+            document.getElementById('viewOrderList').classList.add('hidden');
+            document.getElementById('viewSearchPage').classList.add('hidden');
+
+            document.getElementById('navWebOrders').className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition";
+            document.getElementById('navOrderList').className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition";
+            document.getElementById('navSearchPage').className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition";
+
+            if(tab === 'webOrders') {
+                document.getElementById('viewWebOrders').classList.remove('hidden');
+                document.getElementById('navWebOrders').className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-purple-600/20 text-purple-300 border border-purple-500/30";
+                renderWebOrdersTable();
+            } else if(tab === 'orderList') {
+                document.getElementById('viewOrderList').classList.remove('hidden');
+                document.getElementById('navOrderList').className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-purple-600/20 text-purple-300 border border-purple-500/30";
+                renderOrderListTable();
+            } else if(tab === 'searchPage') {
+                document.getElementById('viewSearchPage').classList.remove('hidden');
+                document.getElementById('navSearchPage').className = "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-purple-600/20 text-purple-300 border border-purple-500/30";
+                executeDedicatedSearch();
+            }
+        }
+
+        function renderWebSubTabs() {
+            const subTabs = ['Pending', 'Processing', 'Good But No Response', 'No Response', 'Advance Payment', 'On Hold', 'Cancel', 'Incomplete'];
+            const container = document.getElementById('webOrderSubTabs');
+            container.innerHTML = subTabs.map(st => {
+                const count = ordersData.filter(o => o.type === 'web' && o.status === st).length;
+                const active = currentWebSubTab === st ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20' : 'bg-[#121826] text-slate-400 hover:bg-slate-800 border border-slate-800';
+                return `<button onclick="setWebSubTab('${st}')" class="px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap ${active}">
+                    <span>${st}</span>
+                    <span class="px-1.5 py-0.2 bg-black/30 rounded-full text-[10px]">${count}</span>
+                </button>`;
+            }).join('');
+        }
+
+        function setWebSubTab(st) {
+            currentWebSubTab = st;
+            renderWebSubTabs();
+            renderWebOrdersTable();
+        }
+
+        function renderOrderListSubTabs() {
+            const subTabs = ['Approved', 'Pending', 'RTS', 'Shipped', 'Cancelled'];
+            const container = document.getElementById('orderListSubTabs');
+            container.innerHTML = subTabs.map(st => {
+                const count = ordersData.filter(o => o.type === 'list' && o.status === st).length;
+                const active = currentOrderListSubTab === st ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20' : 'bg-[#121826] text-slate-400 hover:bg-slate-800 border border-slate-800';
+                return `<button onclick="setOrderListSubTab('${st}')" class="px-3.5 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap ${active}">
+                    <span>${st}</span>
+                    <span class="px-1.5 py-0.2 bg-black/30 rounded-full text-[10px]">${count}</span>
+                </button>`;
+            }).join('');
+        }
+
+        function setOrderListSubTab(st) {
+            currentOrderListSubTab = st;
+            renderOrderListSubTabs();
+            renderOrderListTable();
+        }
+
+        function setCourierFilter(c) {
+            currentCourierFilter = c;
+            ['All', 'Pathao', 'Steadfast'].forEach(cf => {
+                const btn = document.getElementById('courierFilter' + cf);
+                if(cf === c) {
+                    btn.className = "px-3 py-1 bg-purple-600/30 text-purple-300 border border-purple-500/40 rounded-lg text-xs font-medium";
+                } else {
+                    btn.className = "px-3 py-1 bg-slate-800 text-slate-400 border border-slate-700/60 rounded-lg text-xs font-medium hover:text-slate-200";
+                }
+            });
+            renderOrderListTable();
+        }
+
+        function renderWebOrdersTable() {
+            const tbody = document.getElementById('webOrdersTableBody');
+            const filterText = (document.getElementById('webOrderFilterInput').value || '').toLowerCase();
+            
+            let filtered = ordersData.filter(o => o.type === 'web' && o.status === currentWebSubTab);
+            if(filterText) {
+                filtered = filtered.filter(o => o.name.toLowerCase().includes(filterText) || o.phone.includes(filterText) || o.invoice.toLowerCase().includes(filterText));
+            }
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-500">No Web Orders found in "${currentWebSubTab}" status.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(o => `
+                <tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="p-3.5 text-center"><input type="checkbox" value="${o.id}" class="web-order-checkbox rounded bg-slate-900 border-slate-700 text-purple-600"></td>
+                    <td class="p-3.5">
+                        <span class="font-mono font-bold text-purple-400 block">${o.invoice}</span>
+                        <span class="text-[10px] text-slate-500">${o.date}</span>
+                    </td>
+                    <td class="p-3.5">
+                        <span class="font-semibold text-white block">${o.name}</span>
+                        <span class="text-slate-400 font-mono text-[11px]">${o.phone}</span>
+                        <p class="text-[10px] text-slate-500 truncate max-w-[200px]">${o.address}</p>
+                    </td>
+                    <td class="p-3.5">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300">${o.courier}</span>
+                        <span class="font-mono text-[10px] text-slate-400 block mt-0.5">${o.tracking || 'No Tracking'}</span>
+                    </td>
+                    <td class="p-3.5 font-medium text-slate-300">${o.product}</td>
+                    <td class="p-3.5">
+                        <span class="font-mono font-bold text-emerald-400">${o.amount} BDT</span>
+                        <span class="block text-[10px] text-slate-500">COD / Cash</span>
+                    </td>
+                    <td class="p-3.5 text-center flex items-center justify-center gap-2">
+                        <button onclick="openOrderDrawerModal('${o.id}')" class="px-2.5 py-1 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg text-xs font-semibold border border-purple-500/30 flex items-center gap-1">
+                            <i class="fa-solid fa-folder-open text-[10px]"></i> Open
+                        </button>
+                        <button onclick="confirmOrderAction('${o.id}')" class="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded-lg text-xs font-semibold border border-emerald-500/30 flex items-center gap-1">
+                            <i class="fa-solid fa-check text-[10px]"></i> Confirm
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderOrderListTable() {
+            const tbody = document.getElementById('orderListTableBody');
+            const filterText = (document.getElementById('orderListFilterInput').value || '').toLowerCase();
+            
+            let filtered = ordersData.filter(o => o.type === 'list' && o.status === currentOrderListSubTab);
+            if(currentCourierFilter !== 'All') {
+                filtered = filtered.filter(o => o.courier === currentCourierFilter);
+            }
+            if(filterText) {
+                filtered = filtered.filter(o => o.name.toLowerCase().includes(filterText) || o.phone.includes(filterText) || o.invoice.toLowerCase().includes(filterText));
+            }
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-500">No orders found in "${currentOrderListSubTab}" pipeline.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(o => `
+                <tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="p-3.5 text-center"><input type="checkbox" value="${o.id}" class="order-list-checkbox rounded bg-slate-900 border-slate-700 text-purple-600"></td>
+                    <td class="p-3.5">
+                        <span class="font-mono font-bold text-purple-400 block">${o.invoice}</span>
+                        <span class="text-[10px] text-slate-500">${o.date}</span>
+                    </td>
+                    <td class="p-3.5">
+                        <span class="font-semibold text-white block">${o.name}</span>
+                        <span class="text-slate-400 font-mono text-[11px]">${o.phone}</span>
+                        <p class="text-[10px] text-slate-500 truncate max-w-[200px]">${o.address}</p>
+                    </td>
+                    <td class="p-3.5">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300">${o.courier}</span>
+                        <span class="font-mono text-[10px] text-slate-400 block mt-0.5">${o.tracking || 'Pending Tracking'}</span>
+                    </td>
+                    <td class="p-3.5 font-medium text-slate-300">${o.product}</td>
+                    <td class="p-3.5">
+                        <span class="font-mono font-bold text-emerald-400">${o.amount} BDT</span>
+                    </td>
+                    <td class="p-3.5 text-center">
+                        <button onclick="openOrderDrawerModal('${o.id}')" class="px-3 py-1 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg text-xs font-semibold border border-purple-500/30">
+                            <i class="fa-solid fa-folder-open mr-1"></i> Open / Process
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function confirmOrderAction(id) {
+            const order = ordersData.find(o => o.id === id);
+            if(order) {
+                order.status = 'Approved';
+                order.type = 'list';
+                notifyTelegramBot(order);
+                initDashboard();
+                alert(`Order ${order.invoice} confirmed successfully and sent to Telegram & Order List!`);
+            }
+        }
+
+        function openOrderDrawerModal(id) {
+            const o = ordersData.find(item => item.id === id);
+            if(!o) return;
+
+            document.getElementById('drawerOrderId').value = o.id;
+            document.getElementById('drawerInvoiceId').innerText = o.invoice;
+            document.getElementById('drawerOrderDate').innerText = o.date;
+            document.getElementById('drawerCustomerPhone').value = o.phone;
+            document.getElementById('drawerCustomerName').value = o.name;
+            document.getElementById('drawerCourier').value = o.courier;
+            document.getElementById('drawerTrackingId').value = o.tracking;
+            document.getElementById('drawerAddress').value = o.address;
+            document.getElementById('drawerStatusSelect').value = o.status;
+
+            document.getElementById('drawerCallBtn').href = `tel:${o.phone}`;
+            document.getElementById('drawerWaBtn').href = `https://wa.me/88${o.phone}`;
+
+            recalculateDrawerTotal();
+            document.getElementById('orderDrawerModal').classList.remove('hidden');
+        }
+
+        function closeOrderDrawer() {
+            document.getElementById('orderDrawerModal').classList.add('hidden');
+        }
+
+        function recalculateDrawerTotal() {
+            const prodVal = document.getElementById('drawerProductSelect').value.split('|');
+            const price = parseInt(prodVal[1]) || 450;
+            const delivery = parseInt(document.getElementById('calcDelivery').value) || 60;
+            document.getElementById('calcSubtotal').innerText = price + ' BDT';
+            document.getElementById('calcGrandTotal').innerText = (price + delivery) + ' BDT';
+        }
+
+        function saveDrawerDetails(e) {
+            e.preventDefault();
+            const id = document.getElementById('drawerOrderId').value;
+            const o = ordersData.find(item => item.id === id);
+            if(o) {
+                o.phone = document.getElementById('drawerCustomerPhone').value;
+                o.name = document.getElementById('drawerCustomerName').value;
+                o.courier = document.getElementById('drawerCourier').value;
+                o.tracking = document.getElementById('drawerTrackingId').value;
+                o.address = document.getElementById('drawerAddress').value;
+                
+                const prodVal = document.getElementById('drawerProductSelect').value.split('|');
+                o.product = prodVal[0];
+                const delivery = parseInt(document.getElementById('calcDelivery').value) || 60;
+                o.amount = parseInt(prodVal[1]) + delivery;
+
+                closeOrderDrawer();
+                initDashboard();
+                alert('Order details updated successfully!');
+            }
+        }
+
+        function updateOrderStatusFromDrawer() {
+            const id = document.getElementById('drawerOrderId').value;
+            const newStatus = document.getElementById('drawerStatusSelect').value;
+            const o = ordersData.find(item => item.id === id);
+            if(o) {
+                o.status = newStatus;
+                if(['Approved', 'RTS', 'Shipped'].includes(newStatus)) {
+                    o.type = 'list';
+                } else {
+                    o.type = 'web';
+                }
+                notifyTelegramBot(o);
+                closeOrderDrawer();
+                initDashboard();
+                alert(`Order status updated to "${newStatus}" and synchronized with Telegram!`);
+            }
+        }
+
+        function openNewOrderModal() { document.getElementById('newOrderModal').classList.remove('hidden'); }
+        function closeNewOrderModal() { document.getElementById('newOrderModal').classList.add('hidden'); }
+
+        function handleCreateNewOrder(e) {
+            e.preventDefault();
+            const name = document.getElementById('newCustName').value;
+            const phone = document.getElementById('newCustPhone').value;
+            const courier = document.getElementById('newCourier').value;
+            const address = document.getElementById('newAddress').value;
+            const prodVal = document.getElementById('newProduct').value.split('|');
+            
+            const newId = 'ORD-' + Math.floor(1000 + Math.random() * 9000);
+            const newInv = '#INV-' + Math.floor(1000 + Math.random() * 9000);
+
+            const newOrd = {
+                id: newId,
+                invoice: newInv,
+                date: '08 Oct 2026, 05:45 PM',
+                name: name,
+                phone: phone,
+                address: address,
+                courier: courier,
+                tracking: 'PTH-' + Math.floor(100000 + Math.random() * 900000),
+                product: prodVal[0],
+                amount: parseInt(prodVal[1]) + 60,
+                status: 'Pending',
+                type: 'web'
+            };
+
+            ordersData.unshift(newOrd);
+            notifyTelegramBot(newOrd);
+            closeNewOrderModal();
+            initDashboard();
+            alert('New order created successfully and notified to Telegram & Incomplete/Pending pipeline!');
+        }
+
+        function setSearchCategory(cat) {
+            searchCategory = cat;
+            ['all', 'invoice', 'phone', 'name', 'tracking', 'payment'].forEach(c => {
+                const btn = document.getElementById('searchTab-' + c);
+                if(c === cat) {
+                    btn.className = "search-tab font-semibold text-purple-400 border-b-2 border-purple-500 pb-2 transition whitespace-nowrap";
+                } else {
+                    btn.className = "search-tab text-slate-400 hover:text-slate-200 pb-2 transition whitespace-nowrap";
+                }
+            });
+            executeDedicatedSearch();
+        }
+
+        function executeDedicatedSearch() {
+            const query = (document.getElementById('dedicatedSearchInput').value || '').toLowerCase();
+            const tbody = document.getElementById('searchResultsTableBody');
+            
+            let results = ordersData;
+            if(query) {
+                results = ordersData.filter(o => {
+                    if(searchCategory === 'invoice') return o.invoice.toLowerCase().includes(query);
+                    if(searchCategory === 'phone') return o.phone.includes(query);
+                    if(searchCategory === 'name') return o.name.toLowerCase().includes(query);
+                    if(searchCategory === 'tracking') return (o.tracking || '').toLowerCase().includes(query);
+                    if(searchCategory === 'payment') return String(o.amount).includes(query);
+                    return o.invoice.toLowerCase().includes(query) || o.phone.includes(query) || o.name.toLowerCase().includes(query) || (o.tracking || '').toLowerCase().includes(query);
+                });
+            }
+
+            document.getElementById('searchResultsCount').innerText = results.length + ' Items Found';
+
+            if(results.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-500">No matching records found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = results.map(o => `
+                <tr class="hover:bg-slate-800/40 transition border-b border-slate-800/40">
+                    <td class="p-3.5 font-mono font-bold text-purple-400">${o.invoice}</td>
+                    <td class="p-3.5">
+                        <span class="font-semibold text-white block">${o.name}</span>
+                        <span class="text-slate-400 font-mono text-[11px]">${o.phone}</span>
+                    </td>
+                    <td class="p-3.5 font-mono text-slate-300">${o.tracking || 'None'}</td>
+                    <td class="p-3.5 text-slate-300">${o.product}</td>
+                    <td class="p-3.5 font-mono text-emerald-400 font-bold">${o.amount} BDT</td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 rounded text-[10px] bg-purple-900/40 text-purple-300 border border-purple-500/30">${o.status}</span></td>
+                    <td class="p-3.5 text-center">
+                        <button onclick="openOrderDrawerModal('${o.id}')" class="px-3 py-1 bg-purple-600/20 text-purple-300 rounded-lg text-xs font-semibold hover:bg-purple-600/30">Open</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function handleGlobalSearch(e) {
+            if(e.key === 'Enter') {
+                const val = e.target.value;
+                switchMainTab('searchPage');
+                document.getElementById('dedicatedSearchInput').value = val;
+                executeDedicatedSearch();
+            }
+        }
+
+        function toggleActionsPopover() {
+            const pop = document.getElementById('actionsPopover');
+            pop.classList.toggle('hidden');
+        }
+        function toggleOrderListActionsPopover() {
+            const pop = document.getElementById('orderListActionsPopover');
+            pop.classList.toggle('hidden');
+        }
+
+        function updateBadges() {
+            const webCount = ordersData.filter(o => o.type === 'web').length;
+            const listCount = ordersData.filter(o => o.type === 'list').length;
+            document.getElementById('badgeWebOrders').innerText = webCount;
+            document.getElementById('badgeOrderList').innerText = listCount;
+        }
+
+        function selectAllWebOrders() {
+            document.querySelectorAll('.web-order-checkbox').forEach(cb => cb.checked = true);
+            toggleActionsPopover();
+        }
+        function toggleSelectAllWebOrders(master) {
+            document.querySelectorAll('.web-order-checkbox').forEach(cb => cb.checked = master.checked);
+        }
+
+        function selectAllOrderList() {
+            document.querySelectorAll('.order-list-checkbox').forEach(cb => cb.checked = true);
+            toggleOrderListActionsPopover();
+        }
+        function toggleSelectAllOrderList(master) {
+            document.querySelectorAll('.order-list-checkbox').forEach(cb => cb.checked = master.checked);
+        }
+
+        function bulkMoveCourier(courierName) {
+            alert(`Selected web orders successfully moved to ${courierName}!`);
+            toggleActionsPopover();
+        }
+        function bulkPrint(type) {
+            alert(`Generating ${type} for selected orders...`);
+            toggleActionsPopover();
+        }
+        function bulkOrderListRTS(status) {
+            alert(`Selected orders marked as ${status}!`);
+            toggleOrderListActionsPopover();
+        }
+        function bulkPrintStickers() {
+            alert('Generating printing stickers for selected items...');
+        }
+        function bulkOrderListAction(act) {
+            alert(`Action "${act}" applied to selected orders.`);
+        }
+    </script>
+</body>
+</html>
